@@ -1,0 +1,28 @@
+st	pixels	area km^2	km^2/pixel
+tx	6579	696241	105.827785377717
+co	2263	269837	119.23862129916
+wy	2002	253348	126.547452547453
+mt	2823	381156	135.018065887354
+
+
+steve goddard and travis,
+
+i too have been concerned with the "aspect ratio" of the pixels, so i did a little experiment—take a transect of the larger states from S to N and see how their areas (found at wikipedia) compare to the number of pixels they represent in the image used for analysis in this post
+
+behold...
+
+st	pixels	km^2	km^2/pixel
+tx	6579	696241	105.827785377717
+co	2263	269837	119.23862129916
+wy	2002	253348	126.547452547453
+mt	2823	381156	135.018065887354
+
+as you can see from the km^2/pixel, the area represented by one pixel in montana (N) is 27% larger than one in texas (S). corollary, a pixel in mt is valued at 79% of a similarly weighted pixel in tx. 
+
+the cards are clearly stacked in favor of the south influencing the average temperature for the US. remember that, in spite of this bias, the average of all temps (forgetting this present analysis) is negative at less than 1/10th of 1 degree F, or -0.089 deg F, for the time period
+
+the majority of (undervalued) (+) anomalies occur in the N, whereas the majority of (overvalued) (-) anomalies occur in the S. 
+
+if a true value for each pixel, calculated from it's weight and (now) N-S location, could be tallied for each pixel, i trust Travis' gentlemanly proposition would come out in his favor.
+
+in summary, pixel counting is a fun pursuit (i enjoyed this), but rather useless for doing any productive science
