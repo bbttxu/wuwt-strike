@@ -63,7 +63,7 @@ class TestPixelCounter < Test::Unit::TestCase
     }
     pc = PixelCounter.new
     results = pc.process path, values
-    # puts results.to_json
+    puts results.to_json
     # pc.process path, values
     assert_equal( results['pixels'], 67476 )
     assert_equal( results['average'].to_f, -0.0109668622917778 )

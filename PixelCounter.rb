@@ -18,7 +18,8 @@ class PixelCounter
       sum += freq
       weighted += weight.to_f * freq
     end
-    return weighted / sum
+    
+    return weighted
   end
 
   def cumulative_pixels( input )
@@ -41,15 +42,6 @@ class PixelCounter
       if rgba.opacity == 0
         color = rgba.to_color
         if values[color]
-          # puts color
-          # output[color] += freq.to_f
-          # puts values[color]
-          # puts freq
-          # puts ( values[color] * freq )
-          
-          # counted_pixels += freq
-          # weighted_average += ( freq * values[color] )
-          
           current_value = output[values[color]] || 0
           output[values[color]] = current_value + freq
 
@@ -57,12 +49,15 @@ class PixelCounter
           frequencies[values[color]] = current_freq + freq
           
         else
-          # puts color
+          puts color
         end
       end      
     end
-    output['pixels'] = cumulative_pixels frequencies
-    output['average'] = cumulative_weight_freq frequencies
+    pixels = cumulative_pixels frequencies
+    sum = cumulative_weight_freq frequencies
+    output['pixels'] = pixels
+    output['sum'] = sum
+    output['average'] = (pixels == 0) ? 0 : sum / pixels 
     return output
   end
 end
