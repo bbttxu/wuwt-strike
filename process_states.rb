@@ -7,7 +7,7 @@ include Magick
 # image converted to grayscale, then each state was selected using the wand tool, no anti-aliasing and copied into a new layer
 # each state was exported to make the four individual files
 
-base_img = Magick::ImageList.new 'yeartdeptus-1.png'
+base_img = Magick::ImageList.new ARGV[0]
 # opacity_mask = Magick::ImageList.new 'masked.png'
 # opacity_mask.matte = false
 # opacity_mask.matte = true
@@ -122,6 +122,8 @@ while( line = source.gets)
   cum_total += state_temp
   factor = (area.to_f/cumulative_pixels) / 100
   cum_factor += factor
+
+  puts [ 'state', 'area', 'pixels', 'area/pixels', "\t",'state_temp', 'factor', 'state_temp * pixels' ,  'state_temp * pixels * factor' ].join "\t"
   puts [ state, area, cumulative_pixels, (area.to_f/cumulative_pixels), state_temp, factor, ( state_temp * cumulative_pixels ),  ( state_temp * cumulative_pixels ) * factor ].join "\t"
 
   factor_total += ( state_temp * cumulative_pixels ) 
