@@ -36,7 +36,8 @@ class PixelCounter
     histogram = image.color_histogram
     
     output = {}
-    
+    pixels = 0
+    sum = 0
     frequencies = {}
     histogram.each do | rgba, freq |
       if rgba.opacity == 0
@@ -44,20 +45,22 @@ class PixelCounter
         if values[color]
           current_value = output[values[color]] || 0
           output[values[color]] = current_value + freq
-
+          pixels += freq
+          sum = freq * current_value
           current_freq = frequencies[freq] || 0
           frequencies[values[color]] = current_freq + freq
           
         else
-          puts color
+          # puts color
         end
       end      
     end
-    pixels = cumulative_pixels frequencies
+    # pixels = cumulative_pixels frequencies
     sum = cumulative_weight_freq frequencies
     output['pixels'] = pixels
     output['sum'] = sum
     output['average'] = (pixels == 0) ? 0 : sum / pixels 
+    # puts output.to_json
     return output
   end
 end
