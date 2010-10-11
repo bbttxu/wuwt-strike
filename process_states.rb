@@ -1,8 +1,8 @@
 #!/usr/bin/env ruby -wKU
 require 'rubygems'
-require 'RMagick'
-include Magick
+require 'PixelCounter'
 
+require 'json'
 # copy image from http://climateinsiders.files.wordpress.com/2010/08/yeartdeptus-1.png to local directory
 # image converted to grayscale, then each state was selected using the wand tool, no anti-aliasing and copied into a new layer
 # each state was exported to make the four individual files
@@ -16,51 +16,107 @@ source = File.open( 'states.csv' )
 
 d_t = 0.0
 
+# color_weights = {
+#   '#FAFA00000000' => 7,
+#   '#F0F082822828' => 5,
+#   '#E6E6AFAF2D2D' => 3, 
+#   '#E6E6E6E60000' => 1,
+#   '#6464C8C86464' => -1,
+#   '#0000AAAA0000' => -3,
+#   '#0000A0A0FFFF' => -5,  
+# 
+#   # ah, the joys of working on 32-bit and 64-bit systems
+#   '#FA0000' => 7,
+#   '#F08228' => 5,
+#   '#E6AF2D' => 3, 
+#   '#E6E600' => 1,
+#   '#64C864' => -1,
+#   '#00AA00' => -3,
+#   '#00A0FF' => -5,  
+# }
+
+# color_weights = {
+#   '#FAFA00000000' => 1,
+#   '#F0F082822828' => 1,
+#   '#E6E6AFAF2D2D' => 1, 
+#   '#E6E6E6E60000' => 1,
+#   '#6464C8C86464' => -1,
+#   '#0000AAAA0000' => -1,
+#   '#0000A0A0FFFF' => -1,    
+#   # ah, the joys of working on 32-bit and 64-bit systems
+#   '#FA0000' => 1,
+#   '#F08228' => 1,
+#   '#E6AF2D' => 1, 
+#   '#E6E600' => 1,
+#   '#64C864' => -1,
+#   '#00AA00' => -1,
+#   '#00A0FF' => -1,  
+# }
+# 
+
 color_weights = {
-  # '#820000' => 11,
-  # '#8200DC' => 11,
-  # '#990000' => 9,
-  # '#BE0000' => 9,
-  '#FA00FA' => 7,
-  '#FA0000' => 7,
-  '#F08228' => 5,
-  '#E6AF2D' => 3,
-  # '#E4D944' => 1,
-  '#E6E600' => 1,
-  '#64C864' => -1,
-  '#00AA00' => -3,
-  '#00A0FF' => -5,
-  # '#6633CC' => -7,
-  # '#9933CC' => -9,
-  # '#A000C8' => -9
+  '#FAFA00000000' => 7,
+  '#F0F082822828' => 5,
+  '#E6E6AFAF2D2D' => 3, 
+  '#E6E6E6E60000' => 1,
+  '#6464C8C86464' => -1,
+  '#0000AAAA0000' => -3,
+  '#0000A0A0FFFF' => -5,  
+
+  # ah, the joys of working on 32-bit and 64-bit systems
+  '#610F0F' => 5.5,
+  '#BE0000' => 4.5,
+  '#FA0000' => 3.5,
+  '#F08228' => 2.5,
+  '#E6AF2D' => 1.5,   
+  '#E6E600' => 0.5,
+  '#64C864' => -0.5,
+  '#00AA00' => -1.5,
+  '#00A0FF' => -2.5,  
+  '#8200DC' => -3.5,
+  '#A000C8' => -4.5,
+  '#FA00FA' => -5.5
 }
 
-def cumulative_weight_freq( histogram )
-  weight_frequency_sorted = histogram.sort{ |x,y| y <=> x }
-  sum = 0
-  weight_frequency_sorted.each do |weight,freq|
-    sum += weight * freq
-  end
-  return sum
-end
+# color_weights = {
+#   '#FAFA00000000' => 7,
+#   '#F0F082822828' => 5,
+#   '#E6E6AFAF2D2D' => 3, 
+#   '#E6E6E6E60000' => 1,
+#   '#6464C8C86464' => -1,
+#   '#0000AAAA0000' => -3,
+#   '#0000A0A0FFFF' => -5,  
+# 
+#   # ah, the joys of working on 32-bit and 64-bit systems
+#   '#610F0F' => 1,
+#   '#BE0000' => 1,
+#   '#FA0000' => 1,
+#   '#F08228' => 1,
+#   '#E6AF2D' => 1,   
+#   '#E6E600' => 0,
+#   '#64C864' => -0,
+#   '#00AA00' => -1,
+#   '#00A0FF' => -1,  
+#   '#8200DC' => -1,
+#   '#A000C8' => -1,
+#   '#FA00FA' => -1
+# }
 
-def cumulative_pixels( histogram )
-  weight_frequency_sorted = histogram.sort{ |x,y| y <=> x }
-  sum = 0
-  weight_frequency_sorted.each do |weight,freq|
-    sum += freq
-    # puts (freq.to_s + " " + weight.to_s)
-  end
-  return sum
-end
 
 
-cum_total = 0.0
-cum_factor = 0.0
+
+cumulative_total = 0.0
+cumulative_factor = 0.0
 factor_total = 0.0
+cumulative_pixels = 0.0
+weighted_cumulative_total = 0.0
 
 map_files = []
 n = 0
+
+output = {}
+
+puts ['state','area','temp','km2/pix'].join("\t")
 while( line = source.gets) 
   n += 1
   arr = line.split("\t")
@@ -75,61 +131,31 @@ while( line = source.gets)
   
   # masked_img = base_img.mask base_img.polaroid
   masked_img.write "output/masked-" + state + ".png"
-  masked_img = Magick::ImageList.new( "output/masked-" + state + ".png" )
-  # map_files.push mask_img
-
-
-  weight_frequency = {}
-  pixels = 0
-  d_t = 0.0
+  pc = PixelCounter.new
+  results = pc.process(  "output/masked-" + state + ".png", color_weights )
+  results['state'] = state
+  out = {}
+  out['state'] = state
+  out['area'] = area
+  out['temp'] = results['average']
+  km_pix = area.to_f / results['pixels'].to_f
+  out['km2/pix'] = km_pix
+  factor = km_pix / 100.0
+  # puts ['state','area','temp','km2/pix'].join("\t")
+  puts [factor,state,area,results['pixels'],out['temp'],out['km2/pix']].join("\t")
   
-  histogram = mask_img.color_histogram
-
-  colors = []
-  masked_img.color_histogram.each do |rgba, freq|
-    color = rgba.to_color.to_s
-    # black is the state borders, white is the background, don't care about either
-      # color_weights hash rekeyed to weight_frequency[weight] = frequency
-    
-    
-    if !( color == 'white' or color == 'black' ) # this is probably extraneous as black or white aren't assigned a color
-      if rgba.opacity == 0
-        # color_weights hash rekeyed to weight_frequency[weight] = frequency
-        weight = color_weights[color]
-        if weight
-          # puts color
-          delta_t = 0.0
-          delta_t = (weight.to_f * freq.to_f)
-          # d_t += delta_t
-          weight_frequency[weight.to_i] = freq
-          pixels += freq.to_i
-          # puts [ 'state', 'color','weight', 'freq', 'pixels','delta_t'].join "\t"
-          # puts [ state, color, weight, freq, pixels, delta_t, (pixels/delta_t)].join "\t"
-        end
-      end
-      # puts weight_frequency
-      # puts state + " doesn't have the color " + color unless weight
-    end
-  end
   
-  # puts "weight\tfreq"
-  # puts weight_frequency
-  # puts weight_frequency_sorted
-  d_t =  cumulative_weight_freq( weight_frequency )
-  cumulative_pixels =  cumulative_pixels( weight_frequency )
-  # puts weight_frequency.to_a
-  state_temp = d_t.to_f / cumulative_pixels.to_i
-  cum_total += state_temp
-  factor = (area.to_f/cumulative_pixels) / 100
-  cum_factor += factor
-
-  puts [ 'state', 'area', 'pixels', 'area/pixels', "\t",'state_temp', 'factor', 'state_temp * pixels' ,  'state_temp * pixels * factor' ].join "\t"
-  puts [ state, area, cumulative_pixels, (area.to_f/cumulative_pixels), state_temp, factor, ( state_temp * cumulative_pixels ),  ( state_temp * cumulative_pixels ) * factor ].join "\t"
-
-  factor_total += ( state_temp * cumulative_pixels ) 
-  # puts factor
-  # puts [ state, area, ( area.to_f / freq.to_f ), d_t ].join "\t"
+  output[state] = out
+  cumulative_total += results['average'] * results['pixels'] 
+  weighted_cumulative_total += results['average'] * results['pixels'] * factor
+  cumulative_pixels += results['pixels']
+  # puts out
 end
-puts cum_total / n
-puts cum_factor / n
-puts ( (factor_total)  / (  100 * cum_factor ) ) / n
+puts ['state','area','temp','km2/pix'].join("\t")
+puts [ 'total pixels', cumulative_pixels].join ":\t"
+puts [ 'unweighted total', cumulative_total ].join ":\t"
+puts [ 'unweighted average', cumulative_total / cumulative_pixels ].join ":\t"
+puts [ 'weighted total', weighted_cumulative_total ].join ":\t"
+puts [ 'weighted average', weighted_cumulative_total / cumulative_pixels ].join ":\t"
+
+# puts output.to_json
