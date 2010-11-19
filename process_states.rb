@@ -116,7 +116,7 @@ n = 0
 
 output = {}
 
-puts ['state','area','temp','km2/pix'].join("\t")
+puts ['state','km2','pixels','km2/pix','avg t','area adjustment', 'area adjusted t'].join("\t")
 while( line = source.gets) 
   n += 1
   arr = line.split("\t")
@@ -142,7 +142,7 @@ while( line = source.gets)
   out['km2/pix'] = km_pix
   factor = km_pix / 100.0
   # puts ['state','area','temp','km2/pix'].join("\t")
-  puts [factor,state,area,results['pixels'],out['temp'],out['km2/pix']].join("\t")
+  puts [state,area,results['pixels'],out['km2/pix'],out['temp'], factor, results['average'] * results['pixels'] * factor].join("\t")
   
   
   output[state] = out
@@ -151,11 +151,11 @@ while( line = source.gets)
   cumulative_pixels += results['pixels']
   # puts out
 end
-puts ['state','area','temp','km2/pix'].join("\t")
+puts ['state','km2','pixels','km2/pix','avg t','area adjustment', 'area adjusted t'].join("\t")
 puts [ 'total pixels', cumulative_pixels].join ":\t"
 puts [ 'unweighted total', cumulative_total ].join ":\t"
 puts [ 'unweighted average', cumulative_total / cumulative_pixels ].join ":\t"
-puts [ 'weighted total', weighted_cumulative_total ].join ":\t"
-puts [ 'weighted average', weighted_cumulative_total / cumulative_pixels ].join ":\t"
+puts [ 'area adjusted total', weighted_cumulative_total ].join ":\t"
+puts [ 'area adjusted average', weighted_cumulative_total / cumulative_pixels ].join ":\t"
 
 # puts output.to_json
